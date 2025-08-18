@@ -15,6 +15,7 @@ import jakarta.annotation.PostConstruct;
 @Component
 public class JwtUtil {
 
+    // Secret key for JWT generation (must be at least 256 bits for HMAC-SHA256)
     @Value("${jwt.secret}")
     private String secretKey;
 
@@ -26,15 +27,23 @@ public class JwtUtil {
     @Value("${jwt.expiration-time}") // Inject expiration time from application.properties
     private long expirationTime;
 
+    // Use the secret key to create a secure 256-bit key for HMAC-SHA256
+    private Key key;
+
+    @PostConstruct
+    public void setupKey() {
+        // Generate a secure key using the provided secret, ensuring it's 256 bits (32
+        // bytes)
+        this.key = Keys.hmacShaKeyFor(secretKey.getBytes());
+    }
+
     // Generate JWT token
     public String generateToken(String username) {
-        Key key = Keys.hmacShaKeyFor(secretKey.getBytes());
-
         return Jwts.builder()
                 .setSubject(username)
                 .setIssuedAt(new Date())
                 .setExpiration(new Date(System.currentTimeMillis() + expirationTime)) // Dynamic expiration time
-                .signWith(key, SignatureAlgorithm.HS256)
+                .signWith(key, SignatureAlgorithm.HS256) // Use the secure key for signing
                 .compact();
     }
 
@@ -69,7 +78,7 @@ public class JwtUtil {
     private Claims extractAllClaims(String token) {
         try {
             return Jwts.parserBuilder()
-                    .setSigningKey(secretKey.getBytes()) // Use secretKey from application.properties
+                    .setSigningKey(key) // Use the secure 256-bit key
                     .build()
                     .parseClaimsJws(token)
                     .getBody();

@@ -22,10 +22,10 @@ public class JwtRequestFilter extends OncePerRequestFilter {
             @NonNull HttpServletResponse response,
             @NonNull FilterChain filterChain) throws ServletException, IOException {
 
-        // Skip token validation for the /register route
+        // Skip token validation for the /register and /login routes
         String uri = request.getRequestURI();
-        if (uri.equals("/api/users/register")) {
-            filterChain.doFilter(request, response); // Let the registration request pass through without filtering
+        if (uri.equals("/api/users/register") || uri.equals("/api/users/login")) {
+            filterChain.doFilter(request, response); // Let registration and login requests pass through
             return;
         }
 
@@ -39,9 +39,14 @@ public class JwtRequestFilter extends OncePerRequestFilter {
             username = jwtUtil.extractUsername(token); // Extract username from the token
         }
 
-        // If the token is valid, set the username in the request
+        // If the token is valid, set the username in the request and log the roles
         if (username != null && jwtUtil.validateToken(token, username)) {
             request.setAttribute("username", username); // Set username in request
+        } else {
+            // If the token is invalid, return an unauthorized error
+            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+            response.getWriter().write("Unauthorized: Invalid or expired token");
+            return;
         }
 
         // Continue the filter chain

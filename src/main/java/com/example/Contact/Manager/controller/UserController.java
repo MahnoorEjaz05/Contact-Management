@@ -1,3 +1,4 @@
+
 package com.example.Contact.Manager.controller;
 
 import com.example.Contact.Manager.model.User;
@@ -18,8 +19,7 @@ public class UserController {
     @Autowired
     private JwtUtil jwtUtil;
 
-    @Autowired
-    private BCryptPasswordEncoder passwordEncoder; // To handle password encryption
+    private BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
 
     // User Registration
     @PostMapping("/register")
